@@ -1,17 +1,24 @@
 # Learnings: running rubygems.org locally
 
-A running log of failure modes encountered while bringing up rubygems.org and the fixes that worked. **This file exists so the skill can learn.** When `smoke.sh` fails:
+(日本語訳注: このファイルは英語のエラー文字列をCtrl-Fで検索できることが重要なため、以下の冒頭説明のみ翻訳し、
+テンプレートおよびEntries本体は原文(英語)のまま維持しています。)
 
-1. **Read this file first** — someone may have already solved it (Ctrl-F your error string).
-2. **Read `tmp/run-skill/diagnostic.txt`** — `smoke.sh` writes a structured snapshot of the environment whenever it fails (ports, docker state, rails log tail, ruby/bundle versions).
-3. **Fix the issue.** Note the exact command(s) that worked.
-4. **Add an entry below.** Use the template. Be specific — future-you / future-agent reads this cold and needs to act on it.
-5. **Graduate stable fixes.** If the failure is likely to recur (not a one-off environment quirk), do one or both:
-   - Add a row to `SKILL.md` > Troubleshooting (symptom → fix).
-   - Update `smoke.sh` to auto-detect or auto-recover.
-   - Then mark the entry below "**Status:** graduated" with a link to the commit/PR.
+rubygems.orgを起動する際に遭遇した失敗パターンと、有効だった対処法を蓄積している運用ログです。
+**このファイルは、skillが学習していくために存在します。** `smoke.sh`が失敗したら:
 
-Don't skip step 4 even if you graduated immediately — this file is the *why* behind the SKILL changes.
+1. **まずこのファイルを読む** — 誰かが既に解決している可能性があります(エラー文字列をCtrl-F)。
+2. **`tmp/run-skill/diagnostic.txt`を読む** — `smoke.sh`は失敗するたびに、環境の構造化スナップショット
+   (ポート、docker状態、railsログの末尾、ruby/bundlerのバージョン)を書き出します。
+3. **問題を修正する。** 効果があった正確なコマンドをメモしてください。
+4. **下にエントリを追加する。** テンプレートを使ってください。具体的に書くこと — 未来の自分/未来のエージェントが
+   何の前提知識もない状態でこれを読み、対処できる必要があります。
+5. **安定した修正は"卒業"させる。** その失敗が再発しやすい(単発の環境特有の問題ではない)場合、以下のいずれか、
+   または両方を行ってください:
+   - `SKILL.md`のTroubleshootingに行を追加する(症状→修正)
+   - `smoke.sh`を自動検出・自動回復するよう更新する
+   - その上で下のエントリを"**Status:** graduated"にし、該当のcommit/PRへのリンクを付ける
+
+すぐに"卒業"させた場合でも手順4を省略しないこと — このファイルはSKILLへの変更の背後にある*理由*です。
 
 ## Entry template
 

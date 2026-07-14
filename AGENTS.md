@@ -1,118 +1,120 @@
 # RubyGems.org
 
-The Ruby community's gem host — a Ruby on Rails app (internal name: `gemcutter`).
+Rubyコミュニティのgemホスティングサービス — Ruby on Railsアプリ(内部名: `gemcutter`)。
 
-## Stack
+## スタック
 
 - Ruby 4.0.x (`.ruby-version`), Rails 8.1, Bundler/RubyGems 4.0.x
-- PostgreSQL (>= 14), OpenSearch 2.13.0, Memcached — all required to run app & tests
-- Chrome + Playwright for system tests
+- PostgreSQL (>= 14), OpenSearch 2.13.0, Memcached — いずれもアプリ・テストの実行に必須
+- システムテスト用にChrome + Playwright
 
-## Setup
+## セットアップ
 
-Backing services run via Docker by default. If Docker isn't installed, see
-[CONTRIBUTING.md](CONTRIBUTING.md#setting-up-the-environment) for native install
-instructions (brew on macOS, apt on Debian/Ubuntu).
+周辺サービスはデフォルトでDocker経由で起動します。Dockerが未インストールの場合は
+[CONTRIBUTING.md](CONTRIBUTING.md#setting-up-the-environment)のネイティブインストール手順
+(macOSはbrew、Debian/Ubuntuはapt)を参照してください。
 
 ```bash
-docker compose up        # starts postgres, opensearch, memcached (NOT the app)
-bin/setup                # deps, db:prepare, db:seed, playwright, assets
+docker compose up        # postgres, opensearch, memcachedを起動(アプリ本体は起動しない)
+bin/setup                # 依存関係, db:prepare, db:seed, playwright, アセットビルド
 ```
 
-## Developer data
+## 開発用データ
 
-Seed real data beyond `db:seed` (against the dev DB):
+`db:seed`以上の実データをシードする場合(開発用DBに対して):
 
 ```bash
-# Weekly anon prod DB dump (-c downloads latest from S3; DROPS & recreates the DB)
+# 匿名化された週次本番DBダンプ(-cでS3から最新版をダウンロード; DBをDROPして再作成)
 script/load-pg-dump -c -d rubygems_development ~/Downloads/public_postgresql.tar
 
-# Import .gem files via the push pipeline (the "gem-author" user is created by db:seed)
+# pushパイプライン経由で.gemファイルをインポート("gem-author"ユーザーはdb:seedで作成済み)
 bundle exec rake "gemcutter:import:process[vendor/cache,gem-author]"
-bundle exec rake gemcutter:index:update   # rebuild the gem specs index (compact index / specs.*.gz) after importing
-bundle exec rake searchkick:reindex CLASS=Rubygem   # rebuild the OpenSearch search index (separate from the gem index)
+bundle exec rake gemcutter:index:update   # インポート後にgem specsインデックス(compact index / specs.*.gz)を再構築
+bundle exec rake searchkick:reindex CLASS=Rubygem   # OpenSearchの検索インデックスを再構築(gemインデックスとは別)
 ```
 
-Dumps: <https://rubygems.org/pages/data>. Drop `-c` to load an already-downloaded file.
+ダンプ: <https://rubygems.org/pages/data>。既にダウンロード済みのファイルを使う場合は`-c`を外してください。
 
-## Commands
+## コマンド
 
 ```bash
-bin/rails s            # run the app on :3000
-bin/rails test:all     # all tests (unit + system)
-bin/rails test         # non-system tests
-bin/rails test test/models/rubygem_test.rb:42   # single file / line
-bin/rails test -n /pattern/                     # tests matching name pattern
-bin/rails test:system  # system tests (Playwright/Chrome)
-bin/ci             # full CI suite locally (config/ci.rb)
+bin/rails s            # アプリを:3000で起動
+bin/rails test:all     # 全テスト(unit + system)
+bin/rails test         # system以外のテスト
+bin/rails test test/models/rubygem_test.rb:42   # 単一ファイル・単一行
+bin/rails test -n /pattern/                     # 名前パターンに一致するテスト
+bin/rails test:system  # systemテスト(Playwright/Chrome)
+bin/ci             # ローカルでCIスイート全体を実行(config/ci.rb)
 ```
 
-**`DB_HOST`:**
+**`DB_HOST`について:**
 
-- Standard install: defaults to the local Postgres socket — no setup needed.
-- Network host (e.g. dev containers): must be set. dotenv excludes `.env.local`
-  in the test env, so set it inline:
+- 標準的なインストール: ローカルのPostgresソケットがデフォルトで使われ、設定不要
+- ネットワーク越しのホスト(例: dev container): 設定が必須。テスト環境ではdotenvが`.env.local`を
+  除外するため、インラインで指定する:
 
 ```bash
-DB_HOST=db rails test   # only when Postgres isn't local
+DB_HOST=db rails test   # Postgresがローカルにない場合のみ
 ```
 
-Team members with 1Password access can prefix any command with `script/dev` to
-load dev secrets — see [CONTRIBUTING.md](CONTRIBUTING.md#developing-with-dev-secrets).
+1Passwordにアクセスできるチームメンバーは、任意のコマンドの前に`script/dev`を付けることで
+開発用シークレットを読み込めます — [CONTRIBUTING.md](CONTRIBUTING.md#developing-with-dev-secrets)を参照。
 
-## Lint & security (CI will fail otherwise)
+## Lint & セキュリティ(CIが落ちる原因になるため)
 
-All of these run as part of `bin/ci`; reach for them individually when iterating.
+以下はすべて`bin/ci`の一部として実行されます。個別に試したい場合はこちらを使ってください。
 
 ```bash
-bin/rubocop              # Ruby style
-bin/herb analyze         # ERB linting
-bin/prettier             # JS style
-rake format              # auto-fix Ruby + JS
+bin/rubocop              # Rubyのスタイルチェック
+bin/herb analyze         # ERBのlint
+bin/prettier             # JSのスタイルチェック
+rake format              # Ruby + JSを自動修正
 bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
-bin/importmap audit      # JS dependency vulnerability audit
+bin/importmap audit      # JS依存関係の脆弱性監査
 ```
 
-## Architecture (`app/`)
+## アーキテクチャ (`app/`)
 
-- **Dual interface**: the website (HTML controllers in `controllers/`) and the gem-client
-  API (`controllers/api/v1`, `controllers/api/v2`, plus compact_index endpoints
-  `/versions`, `/info/:gem_name`, `/names` that `bundle`/`gem` fetch).
-- `models/`, `controllers/`, `views/` — standard Rails
-- `components/` — ViewComponent UI components
-- `policies/` — Pundit authorization
-- `jobs/` — background jobs (GoodJob + Shoryuken/SQS)
-- `avo/` — Avo admin interface
-- `tasks/` — maintenance_tasks (data migrations)
-- Frontend: Propshaft + importmap (no JS bundler), Stimulus controllers in
-  `app/javascript/controllers/`, Tailwind CSS.
-- Feature flags via Flipper (`flipper-active_record`; UI at `/features`).
-- Auth via Clearance. Gem processing stores files in S3 (prod) or `server/` (dev).
-- `lib/compact_index*`, `lib/rstuf*`, `lib/gemcutter` — gem index, TUF signing, core domain
+- **2つのインターフェース**: Webサイト(`controllers/`配下のHTMLコントローラー)とgemクライアント用
+  API(`controllers/api/v1`、`controllers/api/v2`、および`bundle`/`gem`が取得する
+  compact_indexエンドポイント`/versions`, `/info/:gem_name`, `/names`)
+- `models/`, `controllers/`, `views/` — 標準的なRails構成
+- `components/` — ViewComponentによるUIコンポーネント
+- `policies/` — Punditによる認可
+- `jobs/` — バックグラウンドジョブ(GoodJob + Shoryuken/SQS)
+- `avo/` — Avo管理画面
+- `tasks/` — maintenance_tasks(データマイグレーション)
+- フロントエンド: Propshaft + importmap(JSバンドラーなし)、`app/javascript/controllers/`配下の
+  Stimulusコントローラー、Tailwind CSS
+- Flipperによるフィーチャーフラグ(`flipper-active_record`; UIは`/features`)
+- 認証はClearance。gemファイルはS3(本番)または`server/`(開発)に保存
+- `lib/compact_index*`, `lib/rstuf*`, `lib/gemcutter` — gemインデックス、TUF署名、コアドメイン
 
-## Testing
+## テスト
 
-- Minitest with `shoulda-context` (`class FooTest < ActiveSupport::TestCase`, `should` blocks) + `shoulda-matchers`.
-- `factory_bot` for test data (`create(:rubygem)`) — not fixtures; factories in `test/factories/`.
-- `mocha` for mocking; system tests use Capybara + Playwright.
-- `test/` mirrors `app/`. **Contributions are not accepted without tests.**
+- Minitestと`shoulda-context`(`class FooTest < ActiveSupport::TestCase`, `should`ブロック) + `shoulda-matchers`
+- テストデータには`factory_bot`を使用(`create(:rubygem)`) — fixturesではない。ファクトリは`test/factories/`
+- モックには`mocha`。systemテストはCapybara + Playwright
+- `test/`は`app/`のディレクトリ構成をミラーする。**テストなしのコントリビューションは受け付けられません**
 
-## Guardrails
+## ガードレール
 
-- Gems are **yanked, never hard-deleted**: yanking creates a `Deletion` and sets the version `indexed: false`.
-- Security-sensitive subsystems — change only with extra care and thorough tests:
-  - **Auth & sessions** — Clearance (`app/models/user.rb`)
-  - **MFA** — TOTP + WebAuthn (`app/models/concerns/user_*_methods.rb`, `webauthn_*.rb`)
-  - **API keys & scopes** — `api_key.rb`, `api_key_rubygem_scope.rb` (push/yank/etc. permissions)
-  - **Trusted publishing (OIDC)** — keyless publishing via `app/models/oidc/**` (e.g. GitHub Actions); access policies & token exchange
-  - **Gem push pipeline** — `app/models/pusher.rb` (validates & ingests uploaded gems)
-  - **Ownership** — `app/models/ownership.rb` (who may push/yank a gem)
-  - **Attestations / provenance** — `app/models/attestation.rb`, Sigstore cert chain
-  - **TUF signing** — `lib/rstuf*`
-- Never commit secrets or production data; use the [dev-secrets workflow](CONTRIBUTING.md#developing-with-dev-secrets).
+- gemは**yank(取り下げ)されるのみで、物理削除はされない**: yankすると`Deletion`が作られ、
+  バージョンの`indexed`が`false`になる
+- 特に注意して変更すべきセキュリティ関連のサブシステム(変更には十分なテストが必要):
+  - **認証・セッション** — Clearance (`app/models/user.rb`)
+  - **多要素認証(MFA)** — TOTP + WebAuthn (`app/models/concerns/user_*_methods.rb`, `webauthn_*.rb`)
+  - **APIキーとスコープ** — `api_key.rb`, `api_key_rubygem_scope.rb`(push/yank等の権限)
+  - **Trusted publishing (OIDC)** — GitHub Actions等によるキーレスpublish(`app/models/oidc/**`); アクセスポリシーとトークン交換
+  - **gem pushパイプライン** — `app/models/pusher.rb`(アップロードされたgemの検証と取り込み)
+  - **所有権(Ownership)** — `app/models/ownership.rb`(誰がpush/yankできるか)
+  - **証明・来歴(Attestations/provenance)** — `app/models/attestation.rb`, Sigstore証明書チェーン
+  - **TUF署名** — `lib/rstuf*`
+- シークレットや本番データは絶対にコミットしない。[開発用シークレットのワークフロー](CONTRIBUTING.md#developing-with-dev-secrets)を使うこと
 
-## Conventions
+## 規約
 
-- master must stay fast-forwardable; branch off it for every change.
-- Run `bin/ci` locally before pushing — it mirrors CI (lint, security, tests).
-- User-facing strings: add keys to `config/locales/en.yml`, then run `bin/fill-locales` to propagate to other locales.
+- masterは常にfast-forward可能な状態を保つこと。変更の際は必ずここからブランチを切る
+- pushする前にローカルで`bin/ci`を実行すること — CIと同じ内容(lint, security, tests)を再現できる
+- ユーザー向け文字列: `config/locales/en.yml`にキーを追加し、`bin/fill-locales`を実行して
+  他のロケールに反映すること

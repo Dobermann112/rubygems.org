@@ -1,60 +1,58 @@
-# RubyGems.org (née Gemcutter)
-The Ruby community's gem host.
+# RubyGems.org (旧称 Gemcutter)
+Rubyコミュニティのgemホスティングサービス。
 
-## Purpose
+## 目的
 
-* Provide a better API for dealing with gems
-* Create more transparent and accessible project pages
-* Enable the community to improve and enhance the site
+* gemを扱うためのより良いAPIを提供する
+* より透明で利用しやすいプロジェクトページを作る
+* コミュニティがサイトを改善・拡張できるようにする
 
-## Support
+## サポート
 
 <a href="https://rubycentral.org/"><img src="doc/ruby_central_logo.png" height=110></a><br>
 
-[RubyGems.org](https://rubygems.org) is managed by [Ruby Central](https://rubycentral.org), a non-profit organization that supports the Ruby community through projects like this one, as well as [RubyConf](https://rubyconf.org), [RailsConf](https://railsconf.org), and [Bundler](https://bundler.io). You can support Ruby Central by attending or [sponsoring](sponsors@rubycentral.org) a conference, or by [joining as a supporting member](https://rubycentral.org/#/portal/signup).
+[RubyGems.org](https://rubygems.org) は非営利団体[Ruby Central](https://rubycentral.org)によって運営されています。Ruby Centralは、このプロジェクトのほか、[RubyConf](https://rubyconf.org)、[RailsConf](https://railsconf.org)、[Bundler](https://bundler.io)といったプロジェクトを通じてRubyコミュニティを支援しています。カンファレンスに参加・[協賛](sponsors@rubycentral.org)したり、[サポートメンバーとして参加](https://rubycentral.org/#/portal/signup)することで、Ruby Centralを支援できます。
 
-Hosting is donated by [Amazon Web Services](https://aws.amazon.com), with CDN service donated by [Fastly](https://fastly.com).
+ホスティングは[Amazon Web Services](https://aws.amazon.com)から、CDNサービスは[Fastly](https://fastly.com)から提供されています。
 
-[Learn more about our sponsors and how they work together.](https://rubygems.org/pages/sponsors)
+[スポンサーとその協力関係について詳しくはこちら。](https://rubygems.org/pages/sponsors)
 
-## Links
+## リンク
 
-* [RFCs](https://github.com/rubygems/rfcs)
-* [Support](mailto:support@rubygems.org)
+* [RFC(仕様提案)](https://github.com/rubygems/rfcs)
+* [サポート](mailto:support@rubygems.org)
 * [GitHub Workflow][]: [![test workflow](https://github.com/rubygems/rubygems.org/actions/workflows/test.yml/badge.svg)](https://github.com/rubygems/rubygems.org/actions/workflows/test.yml) [![lint workflow](https://github.com/rubygems/rubygems.org/actions/workflows/lint.yml/badge.svg)](https://github.com/rubygems/rubygems.org/actions/workflows/lint.yml) [![docker workflow](https://github.com/rubygems/rubygems.org/actions/workflows/docker.yml/badge.svg)](https://github.com/rubygems/rubygems.org/actions/workflows/docker.yml)
 [![codecov](https://codecov.io/github/rubygems/rubygems.org/graph/badge.svg)](https://codecov.io/github/rubygems/rubygems.org)
 
 [github workflow]: https://github.com/rubygems/rubygems.org/actions/
 
-## Contributions
+## コントリビューション
 
-Please follow our [contribution guidelines][].
+[コントリビューションガイドライン][contribution guidelines]に従ってください。
 
 [contribution guidelines]: https://github.com/rubygems/rubygems.org/blob/master/CONTRIBUTING.md
 
-To get setup, please check out the [Development Setup][].
+セットアップ方法は[Development Setup][]を確認してください。
 
 [development setup]: https://github.com/rubygems/rubygems.org/blob/master/CONTRIBUTING.md#development-setup
 
-Our deployment process is documented on the wiki as well, there's a multi-step
-[Checklist][] to run through.
+デプロイ手順もwikiにドキュメント化されており、複数ステップからなる[チェックリスト][Checklist]に沿って進めます。
 
-[checklist]: https://github.com/rubygems/rubygems-infrastructure/wiki/Deploys
+[Checklist]: https://github.com/rubygems/rubygems-infrastructure/wiki/Deploys
 
-Also please take note of our [Code of Conduct](https://github.com/rubygems/rubygems.org/blob/master/CODE_OF_CONDUCT.md).
+また、[行動規範(Code of Conduct)](https://github.com/rubygems/rubygems.org/blob/master/CODE_OF_CONDUCT.md)にもご留意ください。
 
-If you have any trouble or questions getting set up please create an issue on this repository and we'll be happy to help!
+セットアップでお困りの場合やご質問がある場合は、このリポジトリでIssueを作成してください。喜んでお手伝いします!
 
-## Organization
+## 構成
 
-RubyGems.org consists of a few major parts:
+RubyGems.orgは主に以下の要素から構成されています。
 
-* Rails app: To manage users and allow others to view gems, etc.
-* Gem processor: Handles incoming gems and storing them in Amazon S3 (production) or
-  on the filesystem in `server/` (development).
+* Railsアプリ: ユーザー管理や、他のユーザーがgemを閲覧できるようにする等の機能を担当
+* Gemプロセッサー: アップロードされたgemを受け取り、Amazon S3(本番環境)またはファイルシステム上の`server/`(開発環境)に保存する処理を担当
 
-## License
+## ライセンス
 
-RubyGems.org uses the MIT license. Please check the [LICENSE][] file for more details.
+RubyGems.orgはMITライセンスを使用しています。詳細は[LICENSE][license]ファイルを確認してください。
 
 [license]: https://github.com/rubygems/rubygems.org/blob/master/MIT-LICENSE
